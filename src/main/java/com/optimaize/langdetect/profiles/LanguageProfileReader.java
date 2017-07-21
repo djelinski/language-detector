@@ -21,9 +21,7 @@ import com.optimaize.langdetect.i18n.LdLocale;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * Reads {@link LanguageProfile}s.
@@ -187,6 +185,107 @@ public class LanguageProfileReader {
             return true;
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    /**
+     * Removes grams in foreign scripts from the language profile.
+     *
+     * This method finds the most popular script in the passed profile, and removes all ngrams using other scripts,
+     * special-casing Japanese, which is written using HAN, HIRAGANA and KATAKANA.
+     * @param profile profile to process
+     * @return New profile with bad grams removed
+     */
+    public static LanguageProfile removeForeignScripts(LanguageProfile profile) {
+        boolean isJapanese = "ja".equals(profile.getLocale().toString());
+        Map<Character.UnicodeScript, Long> counts = new HashMap<>();
+
+        for(Map.Entry<String,Integer> ngram: profile.iterateGrams()) {
+            countByScript(counts, ngram.getKey());
+        }
+        Map.Entry<Character.UnicodeScript, Long> maxEntry = null;
+        for (Map.Entry<Character.UnicodeScript, Long> countEntry : counts.entrySet()) {
+            if(maxEntry == null || maxEntry.getValue() < countEntry.getValue())
+                maxEntry = countEntry;
+        }
+        return copyProfile(profile, maxEntry.getKey(),isJapanese);
+    }
+
+    /**
+     * Removes grams in foreign scripts from all languages on the passed list.
+     *
+     * This method finds the most popular script in the passed profile, and removes all ngrams using other scripts,
+     * special-casing Japanese, which is written using HAN, HIRAGANA and KATAKANA.
+      * @param profiles list of profiles to process
+     */
+    public static void removeForeignScripts(List<LanguageProfile> profiles) {
+        ListIterator<LanguageProfile> profileListIterator = profiles.listIterator();
+        while (profileListIterator.hasNext()) {
+            LanguageProfile profile = profileListIterator.next();
+            profileListIterator.set(removeForeignScripts(profile));
+        }
+    }
+
+    private static LanguageProfile copyProfile(LanguageProfile profile, Character.UnicodeScript unicodeScript, boolean isJapanese) {
+        List<Integer> gramLengths = profile.getGramLengths();
+        Map<Integer, Map<String, Integer>> ngrams = new HashMap<>(gramLengths.size());
+        for (Integer gramLength : gramLengths) {
+            HashMap<String, Integer> currentGramMap = new HashMap<>();
+            ngrams.put(gramLength,currentGramMap);
+            for (Map.Entry<String, Integer> ngram : profile.iterateGrams(gramLength)) {
+                Character.UnicodeScript script = getGramScript(ngram.getKey(), isJapanese);
+                if(script == null || script == unicodeScript)
+                    currentGramMap.put(ngram.getKey(),ngram.getValue());
+            }
+        }
+        return new LanguageProfileImpl(profile.getLocale(),ngrams);
+    }
+
+    private static Character.UnicodeScript getGramScript(String text, boolean isJapanese) {
+        Character.UnicodeScript last = null;
+        for (int i=0; i<text.length(); i++) {
+            char c = text.charAt(i);
+            if(c == '�')
+                return Character.UnicodeScript.UNKNOWN;
+            Character.UnicodeScript unicodeScript = Character.UnicodeScript.of(c);
+            switch (unicodeScript) {
+                case INHERITED:
+                case COMMON:
+                case UNKNOWN:
+                    break;
+                default:
+                    if(isJapanese && (unicodeScript == Character.UnicodeScript.KATAKANA || unicodeScript == Character.UnicodeScript.HIRAGANA))
+                        unicodeScript = Character.UnicodeScript.HAN;
+                    if(last != null && last != unicodeScript)
+                        throw new RuntimeException("Mixed scripts in ngram '"+text+"', found: "+last+" and "+unicodeScript);
+                    last = unicodeScript;
+            }
+        }
+        return last;
+    }
+
+    private static void countByScript(Map<Character.UnicodeScript, Long> counter, CharSequence text) {
+        for (int i=0; i<text.length(); i++) {
+            char c = text.charAt(i);
+            Character.UnicodeScript unicodeScript = Character.UnicodeScript.of(c);
+            switch (unicodeScript) {
+                case INHERITED:
+                case COMMON:
+                case UNKNOWN:
+                    //don't count it
+                    break;
+                default:
+                    increment(counter, unicodeScript);
+            }
+        }
+    }
+
+    private static void increment(Map<Character.UnicodeScript, Long> counter, Character.UnicodeScript unicodeScript) {
+        Long number = counter.get(unicodeScript);
+        if (number==null) {
+            counter.put(unicodeScript, 1L);
+        } else {
+            counter.put(unicodeScript, number+1);
         }
     }
 
