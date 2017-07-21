@@ -24,9 +24,6 @@ import java.util.Set;
 /**
  * Removes text written in scripts that are not the dominant script of the text.
  *
- * TODO this does not do special handling for Japanese (3 scripts) and Korean (2 scripts), they should be
- * counted together and kept.
- *
  * @author Fabian Kessler
  */
 public class RemoveMinorityScriptsTextFilter implements TextFilter {
@@ -77,7 +74,7 @@ public class RemoveMinorityScriptsTextFilter implements TextFilter {
         Character.UnicodeScript last = null;
         for (int i=0; i<text.length(); i++) {
             char c = text.charAt(i);
-            Character.UnicodeScript unicodeScript = Character.UnicodeScript.of(c);
+            Character.UnicodeScript unicodeScript = normalizeScript(Character.UnicodeScript.of(c));
             if (unicodeScript == Character.UnicodeScript.INHERITED) {
                 if (toRemove.contains(last)) {
                     //remove, don't update 'last'
@@ -107,7 +104,7 @@ public class RemoveMinorityScriptsTextFilter implements TextFilter {
         Character.UnicodeScript last = null;
         for (int i=0; i<text.length(); i++) {
             char c = text.charAt(i);
-            Character.UnicodeScript unicodeScript = Character.UnicodeScript.of(c);
+            Character.UnicodeScript unicodeScript = normalizeScript(Character.UnicodeScript.of(c));
             switch (unicodeScript) {
                 case INHERITED:
                     //counts as what the last was.
@@ -126,6 +123,18 @@ public class RemoveMinorityScriptsTextFilter implements TextFilter {
         }
         return counter;
     }
+
+    private Character.UnicodeScript normalizeScript(Character.UnicodeScript in) {
+        switch(in){
+            case HIRAGANA:
+            case KATAKANA:
+                // piggyback these to HAN, as removing them might lead to classifying Japanese as Chinese
+                return Character.UnicodeScript.HAN;
+            default:
+                return in;
+        }
+    }
+
     private void increment(Map<Character.UnicodeScript, Long> counter, Character.UnicodeScript unicodeScript) {
         Long number = counter.get(unicodeScript);
         if (number==null) {

@@ -32,6 +32,16 @@ public class RemoveMinorityScriptsTextFilterTest {
     }
 
     @Test
+    public void testWithJapaneseScripts() throws Exception {
+        RemoveMinorityScriptsTextFilter filter = RemoveMinorityScriptsTextFilter.forThreshold(0.3);
+        String result = filter.filter("申請時間外のPCを強制的にシャットダウン。残業適正化とコスト削減");
+        assertEquals("申請時間外のを強制的にシャットダウン。残業適正化とコスト削減", result);
+
+        result = filter.filter("印刷用のトナーにおいては近赤外線を照射すると消色(無色化)する消色トナーが知られており、この消色トナーを用いて印刷を行う各種の画像処理装置が提案されている.");
+        assertEquals("印刷用のトナーにおいては近赤外線を照射すると消色(無色化)する消色トナーが知られており、この消色トナーを用いて印刷を行う各種の画像処理装置が提案されている.", result);
+    }
+
+    @Test
     public void testWithChineseAndSomeEnglish() throws Exception {
         String input = "设为首页收藏本站 开启辅助访问 为首页收藏本站 开启辅助访为首页收藏本站 开启辅助访切换到窄版 请 登录 后使用快捷导航 没有帐号 注册 用户名 Email 自动登录  找回密码 密码 登录  注册 快捷导航 论坛BBS 导读Guide 排行榜Ranklist 淘帖Collection 日志Blog 相册Album 分享Share 搜索 搜索 帖子 用户 公告";
 
