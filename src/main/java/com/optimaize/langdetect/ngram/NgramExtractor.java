@@ -116,7 +116,7 @@ public class NgramExtractor {
 
     /**
      * @return Key = ngram, value = count
-     *         The order is as the n-grams appeared first in the string.
+     *         The order descending on gram length, then as the n-grams appeared first in the string.
      *
      */
     @NotNull
@@ -128,9 +128,12 @@ public class NgramExtractor {
         for (Integer gramLength : gramLengths) {
             initialCapacity += guessNumDistinctiveGrams(len, gramLength);
         }
+        // Start with longest grams
+        List<Integer> sortedGramLengths = new ArrayList<>(gramLengths);
+        Collections.sort(sortedGramLengths, Collections.<Integer>reverseOrder());
 
         Map<String,Integer> grams = new LinkedHashMap<>(initialCapacity);
-        for (Integer gramLength : gramLengths) {
+        for (Integer gramLength : sortedGramLengths) {
             _extractCounted(text, gramLength, len, grams);
         }
         return grams;
