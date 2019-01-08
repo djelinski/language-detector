@@ -26,7 +26,7 @@ public class LanguageDetectorTest {
     @BeforeClass
     public static void init() throws IOException {
         List<LanguageProfile> languageProfiles = new LanguageProfileReader().readAllBuiltIn();
-
+        LanguageProfileReader.removeForeignScripts(languageProfiles);
 
         languageDetector = LanguageDetectorBuilder.create(NgramExtractors.standard())
                 .withProfiles(languageProfiles)
