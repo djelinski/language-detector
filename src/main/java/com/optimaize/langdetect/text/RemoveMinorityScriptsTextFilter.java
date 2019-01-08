@@ -73,6 +73,7 @@ public class RemoveMinorityScriptsTextFilter implements TextFilter {
         StringBuilder remaining = new StringBuilder();
         Character.UnicodeScript last = null;
         for (int i=0; i<text.length(); i++) {
+            //TODO proper handling of surrogate pairs; now they are always preserved
             char c = text.charAt(i);
             Character.UnicodeScript unicodeScript = normalizeScript(Character.UnicodeScript.of(c));
             if (unicodeScript == Character.UnicodeScript.INHERITED) {
@@ -103,7 +104,7 @@ public class RemoveMinorityScriptsTextFilter implements TextFilter {
         Map<Character.UnicodeScript, Long> counter = new HashMap<>();
         Character.UnicodeScript last = null;
         for (int i=0; i<text.length(); i++) {
-            char c = text.charAt(i);
+            int c = Character.codePointAt(text, i);
             Character.UnicodeScript unicodeScript = normalizeScript(Character.UnicodeScript.of(c));
             switch (unicodeScript) {
                 case INHERITED:

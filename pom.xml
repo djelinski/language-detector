@@ -5,7 +5,7 @@
     <groupId>com.optimaize.languagedetector</groupId>
     <artifactId>language-detector</artifactId>
     <name>language-detector</name>
-    <version>0.7-SNAPSHOT</version>
+    <version>0.7-dj-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <url>https://github.com/optimaize/language-detector</url>
@@ -74,6 +74,9 @@
                     <target>${compiler.target}</target>
                     <showDeprecation>true</showDeprecation>
                     <showWarnings>true</showWarnings>
+                    <compilerArgs>
+                        <arg>-Xlint:unchecked</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
 
