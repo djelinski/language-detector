@@ -236,6 +236,8 @@ public class LanguageProfileReader {
                 Character.UnicodeScript script = getGramScript(ngram.getKey(), isJapanese);
                 if(script == null || script == unicodeScript)
                     currentGramMap.put(ngram.getKey(),ngram.getValue());
+                else
+                    System.out.println(profile.getLocale().toString() + "("+unicodeScript+"): "+script+"("+ngram.getKey()+","+ngram.getValue()+")" +(100.0d*ngram.getValue()/profile.getNumGramOccurrences(gramLength))+"%");
             }
         }
         return new LanguageProfileImpl(profile.getLocale(),ngrams);
